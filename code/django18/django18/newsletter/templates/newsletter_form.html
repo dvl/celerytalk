@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Enviar Newsletter
+{% endblock %}
+
+{% block body %}
+    <form method="POST">
+        <table>
+            {% csrf_token %}
+
+            {{ form.as_table }}
+
+            <tr>
+                <th></th>
+                <td>
+                    <input type="submit" value="Enviar">
+                </td>
+            </tr>
+        </table>
+    </form>
+{% endblock %}
