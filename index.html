@@ -146,13 +146,13 @@
                         <pre><code>
     ## tasks.py
 
-    from celery import Celery
+    from celery import Celery, task
     import requests
 
-    app = Celery('tasks', broker='redis://')
+    app = Celery('tasks', broker='amqp://')
 
 
-    @app.task
+    @task
     def baixar_pagina(url):
         pagina = requests.get(url)
 
@@ -181,7 +181,10 @@
                         <img class="stretch" src="img/worker.png" alt="">
 
                         <aside class="notes">
-                            O parametro -A deve indicar o modulo Python que contem o código da aplicação, no caso tasks que vem de tasks.py do slide anterior
+                        <ul>
+                            <li>Processo que consome a fila</li>
+                            <li>O parametro -A deve indicar o modulo Python que contem o código da aplicação, no caso tasks que vem de tasks.py do slide anterior</li>
+                        </ul>
                         </aside>
                     </section>
 
@@ -191,6 +194,20 @@
                         <pre><code>
     celery -A tasks --loglevel=info beat
                         </code></pre>
+
+                        <pre><code>
+@periodic_task(run_every=crontab(minute='*/30'))
+def baixar_varias_paginas():
+    for i in range(0, 100, 10):
+        baixar_pagina.delay('https://httpbin.org/links/{0}'.format(i))
+                        </code></pre>
+
+                        <aside class="notes">
+                            <ul>
+                                <li>Processo que verifica se já está na hora de executar uma tarefa</li>
+                                <li>Gosto de usar para criar tarefas menores para serem consumidas em varias maquinas agilizando o processo</li>
+                            </ul>
+                        </aside>
                     </section>
                 </section>
            
@@ -201,14 +218,105 @@
 
                     <section>
                         <h2>Problema</h2>
+
+                        <pre><code>
+## views.py
+
+def form_valid(self, form):
+    contatos = Contato.objects.all()
+
+    for contato in contatos:
+        send_mail(
+            subject=form['assunto'].value().replace('%nome%', contato.nome),
+            message=form['mensagem'].value(),
+            from_email='no-reply@xdvl.info',
+            recipient_list=[contato.email],
+            fail_silently=False
+        )
+
+    return HttpResponseRedirect('/sucesso/')
+                        </code></pre>
+
+                        <aside class="notes">
+                            O problema no caso é executar o envio de emails dentro da requisição http, funciona bem se tivermos poucos cadastros, e se forem centenas??
+                        </aside>
                     </section>
 
                     <section>
                         <h2>Solução</h2>
+                        <pre><code>
+## views.py
+
+def form_valid(self, form):
+    contatos = Contato.objects.all()
+
+    for contato in contatos:
+        enviar_email.delay(form['assunto'].value(), form['mensagem'].value(),
+                           contato.pk)
+
+    return HttpResponseRedirect('/sucesso/')
+                        </code></pre>
+
+                        <aside class="notes">
+                            <ul>
+                                <li>A chamada da task deve ser sempre mais rapida que executar o codigo da task</li>
+                                <li>Comentar sobre não passar objetos do ORM via parametro em tasks</li>
+                            </ul>
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Solução</h2>
+                        <pre><code>
+## tasks.py
+
+@task
+def enviar_email(assunto, mensagem, contato_pk):
+    contato = Contato.objects.get(pk=contato_pk)
+
+    send_mail(
+        subject=assunto.replace('%nome%', contato.nome),
+        message=mensagem,
+        from_email='no-reply@xdvl.info',
+        recipient_list=[contato.email],
+        fail_silently=False
+    )
+
+                        </code></pre>
+
+                        <aside class="notes">
+                            <ul>
+                                <li>Comentar sobre não passar objetos do ORM via parametro em tasks</li>
+                            </ul>
+                        </aside>
                     </section>
 
                     <section>
                         <h2>Setup</h2>
+                        <pre><code>
+## celery.py
+
+from __future__ import absolute_import
+import os
+from celery import Celery
+from django.conf import settings
+
+# set the default Django settings module for the 'celery' program.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django18.settings')
+
+app = Celery('django18')
+app.config_from_object('django.conf:settings')
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+
+                        </code></pre>
+
+                        <aside class="notes">
+                            <ul>
+                                <li>Comentar da não-necessidade do Djcelery</li>
+                                <li>absolute_import é importante para evitar conflitos com a biblioteca celery do sistema</li>
+                                <li>O Celery por padrão se configura para conectar no RabbitMQ em localhost mas qualquer coisa diferente pode ser feita no settings.py</li>
+                            </ul>
+                        </aside>
                     </section>
                 </section>
 
@@ -219,26 +327,15 @@
 
                     <section>
                         <ul>
-                            <li>Celery Flower</li>
                             <li>RabbitMQ Management</li>
+                            <li>Celery Flower</li>
                         </ul>
-                    </section>
 
-                    <section>
-                        <h2>Celery Flower</h2>
-                        <pre><code>
-pip install flower
-                        </code></pre>
+                        <aside class="notes">
+                            Ambos foram feitos para usar em conjunto com o RabbitMQ
+                        </aside>
                     </section>
-
-                    <section>
-                        <img class="stretch" src="img/celery-flower.png" alt="">
-                    </section>
-
-                    <section>
-                        <img class="stretch" src="img/celery-flower-2.png" alt="">
-                    </section>
-
+                  
                     <section>
                         <h2>RabbitMQ Management</h2>
                         <pre><code>
@@ -249,10 +346,25 @@ sudo rabbitmq-plugins enable rabbitmq_management
                     <section>
                         <img class="stretch" src="img/rabbitmq-management.png" alt="">
                     </section>
-                </section>
 
-                <section>
-                    <h2>Perguntas?</h2>
+                    <section>
+                        <h2>Celery Flower</h2>
+                        <pre><code>
+pip install flower
+                        </code></pre>
+
+                        <aside class="notes">
+                            Aplicação em Flask que consome a API do RabbitMQ Management
+                        </aside>
+                    </section>
+
+                    <section>
+                        <img class="stretch" src="img/celery-flower.png" alt="">
+                    </section>
+
+                    <section>
+                        <img class="stretch" src="img/celery-flower-2.png" alt="">
+                    </section>
                 </section>
             </div>
 
@@ -276,7 +388,7 @@ sudo rabbitmq-plugins enable rabbitmq_management
                 // Optional reveal.js plugins
                 dependencies: [
                     { src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
-                    { src: 'plugin/notes/notes.js', async: true }
+                    { src: 'plugin/notes/notes.js', async: true },
                 ]
             });
 

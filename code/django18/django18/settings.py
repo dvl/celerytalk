@@ -20,6 +20,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 3rd
+    'autofixture',
+    'django_extensions',
+    # project
     'django18.newsletter',
 )
 
@@ -84,3 +88,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/dev/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# Email 
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025

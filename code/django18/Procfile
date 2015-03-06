@@ -1,0 +1,5 @@
+web: python manage.py runserver 0.0.0.0:8000
+worker: celery -A django18 --loglevel=info worker
+beat: celery -A django18 --loglevel=info beat
+email: python manage.py mail_debug
+flower: celery -A django18 flower
