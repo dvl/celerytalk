@@ -52,11 +52,15 @@
                         <p><i class="fa fa-twitter"></i> https://twitter.com/xdvl</p>
                         <p><i class="fa fa-github"></i> https://github.com/dvl</p>
                     </small>
+
+                    <aside class="notes">
+                        Introdução basica de como usar o Celery, afinal a documentação é grande e a principio assunta
+                    </aside>
                 </section>
 
                 <section>
                     <h2>O que é?</h2>
-                    <p>Celery é um sistema distribuido simples, flexivel e confiavel para processar grandes quantidade de mensagens (fila).</p>
+                    <p>"Celery é um sistema distribuido simples, flexivel e confiavel para processar grandes quantidade de mensagens (fila)."</p>
                 </section>
 
                 <section>
@@ -68,7 +72,7 @@
                     </ul>
 
                     <aside class="notes">
-                        <ul> Exemplos
+                        <ul>
                             <li>Por exemplo fora do ciclo de vida da requisição HTTP.</li>
                             <li>Crawler de websites.</li>
                         </ul>
@@ -88,7 +92,6 @@
                                     <li>Redis</li>
                                     <li>RabbitMQ</li>
                                     <li>SQLAlchemy / Django</li>
-                                    <!-- <li>Amazon SQS / MongoDB / IronMQ</li> -->
                                 </ul>
                             </li>
                             <li>Task</li>
@@ -98,7 +101,7 @@
 
                         <aside class="notes">
                             <ul>
-                                <li>Broker: Guarda as mensagens</li>
+                                <li>Broker: Guarda as mensagens / Tambem é possivel usar Amazon SQS / Mongo / IronMQ (PaaS) </li>
                                 <li>Task: Código a ser processado na mensagem</li>
                                 <li>Worker: Roda o código (e devolve ou não o resultado)</li>
                                 <li>Beat: Cria mensagens para as tarefas periódicas</li>
@@ -135,8 +138,7 @@
 
                         <aside class="notes">
                             <ul>
-                                <li>Redis: Há chance de perda de dados</li>
-                                <li>RabbitMQ: Garante a entrega das mensagens</li>
+                                <li>Redis: Há chance de perda de dados afinal não é feito com foco na persistencia de dados</li>
                             </ul>
                         </aside>
                     </section>
@@ -210,7 +212,7 @@ def baixar_varias_paginas():
                         </aside>
                     </section>
                 </section>
-           
+
                 <section>
                     <section>
                         <h2>Django</h2>
@@ -335,7 +337,7 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
                             Ambos foram feitos para usar em conjunto com o RabbitMQ
                         </aside>
                     </section>
-                  
+
                     <section>
                         <h2>RabbitMQ Management</h2>
                         <pre><code>
